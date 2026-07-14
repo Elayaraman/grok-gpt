@@ -85,7 +85,7 @@ export function useChat() {
         updateMessage(targetConversationId, assistantMessageId, {
           status: 'completed',
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Streaming error:', error);
         if (error instanceof GroqAbortError || (error instanceof DOMException && error.name === 'AbortError')) {
           updateMessage(targetConversationId, assistantMessageId, {

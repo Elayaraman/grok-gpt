@@ -20,15 +20,6 @@ export function Header() {
           </span>
           <span>New Plan</span>
         </button>
-
-        {/* Avatar Profile */}
-        <div className="w-8 h-8 rounded-full border border-brand-border overflow-hidden">
-          <img
-            alt="User Profile"
-            className="w-full h-full object-cover"
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAcYrqdMGREKHbfWQ1OqG1t71vqFKAcEQ_ORTsroxj5CgNe6xLKHCOyaGlFRXNgOCnwGvyA6Tonkyr5rrweU8QzGff5mikNORORSjEwxwERndueegI81KNDlFGaeu0FI8x15ktdS-nVl3pDkuAI-RPjZOhEnStVPHas3P5EosQC2mLDYIdXqBebT4bcD1PSIc5-5NqDdCNvcjgm-lgJrqYFEirFBUKdSK7sjqhuI_FEJxd86abfJh2cEFoNllLEsxPoqhB9eAIBMyE"
-          />
-        </div>
       </div>
     </header>
   );

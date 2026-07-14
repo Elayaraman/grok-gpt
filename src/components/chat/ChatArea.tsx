@@ -17,20 +17,47 @@ export function ChatArea({ onSend, onRegenerate, isGenerating }: ChatAreaProps) 
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const shouldFollowStreamRef = useRef(true);
+
+  const handleScroll = () => {
+    const container = chatContainerRef.current;
+    if (!container) return;
+
+    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+    shouldFollowStreamRef.current = distanceFromBottom < 48;
+  };
 
   // Auto-scroll on new message added
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length]);
 
-  // Auto-scroll on token streaming
+  // Follow the stream only when the user is already at the bottom. This keeps
+  // the latest response visible without trapping the user during thinking.
   const lastMessageContent = messages[messages.length - 1]?.content;
   const lastMessageStatus = messages[messages.length - 1]?.status;
   useEffect(() => {
-    if (lastMessageStatus === 'streaming') {
+    if (lastMessageStatus === 'streaming' && shouldFollowStreamRef.current) {
       bottomRef.current?.scrollIntoView({ behavior: 'auto' });
     }
   }, [lastMessageContent, lastMessageStatus]);
+
+  // Pacing the visible text changes layout between store updates. Keep the
+  // bottom in view only while the user has not chosen to read above it.
+  useEffect(() => {
+    const container = chatContainerRef.current;
+    const content = container?.firstElementChild;
+    if (!content || typeof ResizeObserver === 'undefined') return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      if (lastMessageStatus === 'streaming' && shouldFollowStreamRef.current) {
+        bottomRef.current?.scrollIntoView({ behavior: 'auto' });
+      }
+    });
+    resizeObserver.observe(content);
+
+    return () => resizeObserver.disconnect();
+  }, [lastMessageStatus]);
 
   if (!activeConversation) {
     return (
@@ -48,6 +75,7 @@ export function ChatArea({ onSend, onRegenerate, isGenerating }: ChatAreaProps) 
   return (
     <div
       ref={chatContainerRef}
+      onScroll={handleScroll}
       className="flex flex-1 overflow-y-auto p-lg scroll-smooth justify-center"
       id="chat-container"
     >

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
@@ -10,11 +10,48 @@ interface MessageItemProps {
   onRegenerate?: () => void;
 }
 
+// Keep the visual reveal steady when the provider sends several chunks at once,
+// then quickly finish the already-received tail when the response is complete.
+const STREAM_REVEAL_INTERVAL_MS = 24;
+const STREAM_REVEAL_CHARS_PER_TICK = 2;
+const COMPLETED_REVEAL_INTERVAL_MS = 10;
+const COMPLETED_REVEAL_CHARS_PER_TICK = 6;
+
 export function MessageItem({ message, isLast, onRegenerate }: MessageItemProps) {
   const isUser = message.role === 'user';
 
+  // The store still receives the complete stream immediately. Only the rendered
+  // copy is paced, so send/stop/retry and persistence continue to use real data.
+  const [visibleContent, setVisibleContent] = useState(message.content);
+  const targetContentRef = useRef(message.content);
+
+  useEffect(() => {
+    targetContentRef.current = message.content;
+  }, [message.content]);
+
+  useEffect(() => {
+    if (isUser) return;
+
+    const isStreaming = message.status === 'streaming';
+    const revealInterval = isStreaming ? STREAM_REVEAL_INTERVAL_MS : COMPLETED_REVEAL_INTERVAL_MS;
+    const revealCharsPerTick = isStreaming ? STREAM_REVEAL_CHARS_PER_TICK : COMPLETED_REVEAL_CHARS_PER_TICK;
+
+    const revealTimer = window.setInterval(() => {
+      setVisibleContent((currentContent) => {
+        const targetContent = targetContentRef.current;
+        if (currentContent.length >= targetContent.length) return currentContent;
+
+        const currentCharacters = Array.from(currentContent);
+        const targetCharacters = Array.from(targetContent);
+        return targetCharacters.slice(0, currentCharacters.length + revealCharsPerTick).join('');
+      });
+    }, revealInterval);
+
+    return () => window.clearInterval(revealTimer);
+  }, [isUser, message.id, message.status]);
+
   // Extract and hide <think> blocks (must be parsed before hooks)
-  let displayContent = message.content;
+  let displayContent = visibleContent;
   let isThinking = false;
   let thinkContent = '';
 
@@ -29,21 +66,25 @@ export function MessageItem({ message, isLast, onRegenerate }: MessageItemProps)
       displayContent = split[0];
       thinkContent = split[1];
     }
+
+    // Show the thinking section immediately, before the first streamed token
+    // arrives. It remains open for the complete active response.
+    if (message.status === 'streaming') {
+      isThinking = true;
+    }
   }
 
   // Manage expanded state for thought process
   const [isThoughtExpanded, setIsThoughtExpanded] = useState(() => message.status === 'streaming');
+  const thoughtIsExpanded = message.status === 'streaming' || isThoughtExpanded;
 
   // Auto-collapse only when the ENTIRE message finishes streaming
   useEffect(() => {
     if (!isUser) {
       if (message.status !== 'streaming') {
         // Collapse when everything is fully returned
-        const timer = setTimeout(() => setIsThoughtExpanded(false), 500);
+        const timer = setTimeout(() => setIsThoughtExpanded(false), 350);
         return () => clearTimeout(timer);
-      } else {
-        // Keep expanded while streaming
-        setIsThoughtExpanded(true);
       }
     }
   }, [message.status, isUser]);
@@ -66,10 +107,15 @@ export function MessageItem({ message, isLast, onRegenerate }: MessageItemProps)
         {(thinkContent || isThinking) && (
           <div className="mb-2 flex flex-col gap-2 border-l-2 border-brand-sage/30 pl-4 py-1">
             <button
-              onClick={() => setIsThoughtExpanded(!isThoughtExpanded)}
+              disabled={message.status === 'streaming'}
+              onClick={() => {
+                if (message.status !== 'streaming') {
+                  setIsThoughtExpanded(!thoughtIsExpanded);
+                }
+              }}
               className="flex items-center gap-2 text-brand-text/50 text-[14px] font-medium hover:text-brand-text/70 transition-colors w-fit"
             >
-              <span className={`material-symbols-outlined text-[16px] transition-transform duration-300 ${isThoughtExpanded ? 'rotate-90' : ''}`}>
+              <span className={`material-symbols-outlined text-[16px] transition-transform duration-300 ${thoughtIsExpanded ? 'rotate-90' : ''}`}>
                 chevron_right
               </span>
               <span className="material-symbols-outlined text-[16px]">psychology</span>
@@ -79,7 +125,7 @@ export function MessageItem({ message, isLast, onRegenerate }: MessageItemProps)
             </button>
 
             <div
-              className={`grid transition-all duration-500 ease-in-out ${isThoughtExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
+              className={`grid transition-all duration-500 ease-in-out ${thoughtIsExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
             >
               <div className="overflow-hidden">
                 <div className="prose prose-stone max-w-none text-brand-text/50 text-[14px] leading-relaxed pt-2">
@@ -140,7 +186,7 @@ export function MessageItem({ message, isLast, onRegenerate }: MessageItemProps)
         )}
 
         {/* Retry or Regenerate controls */}
-        {isLast && !isUser && (
+        {isLast && !isUser && message.status !== 'streaming' && (
           <div className="flex gap-2 items-center mt-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200">
             {message.status === 'completed' && onRegenerate && (
               <button
