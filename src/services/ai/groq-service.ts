@@ -11,15 +11,7 @@ import type {
 import { parseSSEStream } from './sse-parser';
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-
-const MODELS = ['qwen/qwen3-32b', 'qwen/qwen3.6-27b'] as const;
-// Toggle index — flips between 0 and 1 on each request
-let modelToggle = 0;
-const getNextModel = () => {
-  const model = MODELS[modelToggle % MODELS.length];
-  modelToggle++;
-  return model;
-};
+const DEFAULT_MODEL = 'qwen/qwen3-32b';
 
 // ---------------------------------------------------------------------------
 // Error types
@@ -106,7 +98,7 @@ export async function* streamChatCompletion(
   const {
     apiKey,
     messages,
-    model = getNextModel(),
+    model = DEFAULT_MODEL,
     temperature = 0.6,
     maxCompletionTokens = 4096,
     topP = 0.95,
