@@ -61,6 +61,49 @@ export function useChat() {
 
       let contentAccumulator = '';
 
+      // --- Character-drip queue: normalizes paint speed to a readable pace ---
+      // Network tokens land in rawBuffer; drip timer feeds them to the UI.
+      let rawBuffer = '';
+      let networkDone = false;
+      let dripInterval: ReturnType<typeof setInterval> | null = null;
+
+      const TICK_MS = 30;       // interval between paints (ms)
+      const CHARS_PER_TICK = 4; // characters released per tick
+
+      const drip = () => {
+        if (rawBuffer.length === 0) {
+          if (networkDone) {
+            // Everything painted — finalize
+            if (dripInterval !== null) {
+              clearInterval(dripInterval);
+              dripInterval = null;
+            }
+            updateMessage(targetConversationId, assistantMessageId, { status: 'completed' });
+          }
+          return;
+        }
+
+        const slice = rawBuffer.slice(0, CHARS_PER_TICK);
+        rawBuffer = rawBuffer.slice(CHARS_PER_TICK);
+        contentAccumulator += slice;
+        updateMessage(targetConversationId, assistantMessageId, {
+          content: contentAccumulator,
+        });
+      };
+
+      const startDrip = () => {
+        if (dripInterval === null) {
+          dripInterval = setInterval(drip, TICK_MS);
+        }
+      };
+
+      const stopDrip = () => {
+        if (dripInterval !== null) {
+          clearInterval(dripInterval);
+          dripInterval = null;
+        }
+      };
+
       try {
         const stream = streamChatCompletion({
           apiKey,
@@ -75,33 +118,39 @@ export function useChat() {
 
           const token = chunk.choices[0]?.delta.content;
           if (token) {
-            contentAccumulator += token;
-            updateMessage(targetConversationId, assistantMessageId, {
-              content: contentAccumulator,
-            });
+            rawBuffer += token;
+            startDrip();
           }
         }
 
-        updateMessage(targetConversationId, assistantMessageId, {
-          status: 'completed',
-        });
+        // Network done — drip will finalize once rawBuffer is empty
+        networkDone = true;
       } catch (error: any) {
+        // Stop drip and flush remaining buffer immediately
+        stopDrip();
+        if (rawBuffer) {
+          contentAccumulator += rawBuffer;
+          rawBuffer = '';
+        }
+
         console.error('Streaming error:', error);
         if (error instanceof GroqAbortError || (error instanceof DOMException && error.name === 'AbortError')) {
           updateMessage(targetConversationId, assistantMessageId, {
+            content: contentAccumulator,
             status: 'aborted',
           });
         } else {
           const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
           setChatError(errorMessage);
           updateMessage(targetConversationId, assistantMessageId, {
-            content: contentAccumulator 
+            content: contentAccumulator
               ? `${contentAccumulator}\n\n[Generation error: ${errorMessage}]`
               : `Error: ${errorMessage}`,
             status: 'error',
           });
         }
       } finally {
+        stopDrip();
         if (abortControllerRef.current === controller) {
           abortControllerRef.current = null;
         }
