@@ -62,7 +62,7 @@ export function InputArea({ onSend, onStop, isGenerating, error, onClearError }:
         {/* Form Input Box */}
         <form
           onSubmit={handleSubmit}
-          className="bg-white/80 backdrop-blur-sm border border-brand-border rounded-2xl flex flex-col focus-within:border-brand-sage/40 focus-within:ring-1 focus-within:ring-brand-sage/20 transition-all duration-300 overflow-hidden"
+          className="relative bg-white/80 backdrop-blur-sm border border-brand-border rounded-2xl focus-within:border-brand-sage/40 focus-within:ring-1 focus-within:ring-brand-sage/20 transition-all duration-300 min-h-[56px] flex items-center"
         >
           <textarea
             ref={textareaRef}
@@ -70,43 +70,40 @@ export function InputArea({ onSend, onStop, isGenerating, error, onClearError }:
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="w-full bg-transparent border-none resize-none focus:ring-0 p-lg pb-md font-sans text-brand-text placeholder:text-brand-text/40 max-h-[200px] overflow-y-auto text-[16px] leading-relaxed"
+            className="w-full bg-transparent border-none resize-none focus:outline-none focus:ring-0 pl-md pr-[100px] py-md font-sans text-brand-text placeholder:text-brand-text/40 max-h-[200px] overflow-y-auto text-[16px] leading-relaxed"
             placeholder="Tell Cora what you have in mind..."
             disabled={false}
           />
-          <div className="flex justify-between items-center p-sm px-md">
-            <div className="flex gap-xs">
-              {/* Extra tools placeholder */}
-            </div>
-            <div className="flex items-center gap-xs">
-              {isGenerating ? (
-                <button
-                  type="button"
-                  onClick={onStop}
-                  className="flex items-center gap-xs px-sm py-[6px] bg-brand-terracotta text-white rounded-full hover:bg-brand-terracotta/90 transition-all text-[13px] font-medium shadow-xs"
-                >
-                  <span className="material-symbols-outlined text-[18px]" style={{ fontWeight: 300 }}>
-                    stop
-                  </span>
-                  <span>Stop</span>
-                </button>
-              ) : (
-                <button
-                  type="submit"
-                  disabled={!input.trim()}
-                  className={`flex items-center gap-xs px-sm py-[6px] rounded-full transition-all text-[13px] font-medium ${
-                    input.trim()
-                      ? 'bg-brand-sage text-white hover:bg-brand-sage/90 cursor-pointer shadow-xs'
-                      : 'bg-black/5 text-brand-text/30 cursor-not-allowed'
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-[18px]" style={{ fontWeight: 300 }}>
-                    arrow_upward
-                  </span>
-                  <span>Send</span>
-                </button>
-              )}
-            </div>
+          
+          {/* Floating Pill Button in the Right Corner */}
+          <div className="absolute right-3 bottom-3 flex items-center gap-xs">
+            {isGenerating ? (
+              <button
+                type="button"
+                onClick={onStop}
+                className="flex items-center gap-xs px-sm py-[6px] bg-brand-terracotta text-white rounded-full hover:bg-brand-terracotta/90 transition-all text-[13px] font-medium shadow-xs cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[18px]" style={{ fontWeight: 300 }}>
+                  stop
+                </span>
+                <span>Stop</span>
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={!input.trim()}
+                className={`flex items-center gap-xs px-sm py-[6px] rounded-full transition-all text-[13px] font-medium ${
+                  input.trim()
+                    ? 'bg-brand-sage text-white hover:bg-brand-sage/90 cursor-pointer shadow-xs'
+                    : 'bg-black/5 text-brand-text/30 cursor-not-allowed'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[18px]" style={{ fontWeight: 300 }}>
+                  arrow_upward
+                </span>
+                <span>Send</span>
+              </button>
+            )}
           </div>
         </form>
       </div>

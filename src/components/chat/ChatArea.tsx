@@ -48,7 +48,7 @@ export function ChatArea({ onSend, onRegenerate, isGenerating }: ChatAreaProps) 
   return (
     <div
       ref={chatContainerRef}
-      className="flex flex-1 overflow-y-auto p-lg pb-[180px] scroll-smooth justify-center"
+      className="flex flex-1 overflow-y-auto p-lg scroll-smooth justify-center"
       id="chat-container"
     >
       <div className="max-w-[850px] mx-auto flex flex-col gap-[48px] w-full">
@@ -65,7 +65,7 @@ export function ChatArea({ onSend, onRegenerate, isGenerating }: ChatAreaProps) 
             />
           ))
         )}
-        <div ref={bottomRef} className="h-2" />
+        <div ref={bottomRef} className="h-[220px] shrink-0" />
       </div>
     </div>
   );
