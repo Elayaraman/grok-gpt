@@ -79,15 +79,11 @@ export function MessageItem({ message, isLast, onRegenerate }: MessageItemProps)
             </button>
             
             <div 
-              className={
-                isThinking 
-                  ? 'opacity-100' 
-                  : `grid transition-all duration-500 ease-in-out ${isThoughtExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`
-              }
+              className={`grid transition-all duration-500 ease-in-out ${isThoughtExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
             >
-              <div className={isThinking ? '' : 'overflow-hidden'}>
-                <div className="text-brand-text/50 text-[14px] leading-relaxed pt-2 whitespace-pre-wrap font-sans">
-                  {thinkContent}
+              <div className="overflow-hidden">
+                <div className="prose prose-stone max-w-none text-brand-text/50 text-[14px] leading-relaxed pt-2">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{thinkContent}</ReactMarkdown>
                   {isThinking && (
                     <span className="inline-block streaming-cursor w-2 h-4 align-middle bg-brand-text/30 ml-1" />
                   )}
@@ -137,7 +133,7 @@ export function MessageItem({ message, isLast, onRegenerate }: MessageItemProps)
           >
             {displayContent}
           </ReactMarkdown>
-          {message.status === 'streaming' && !isThinking && (
+          {message.status === 'streaming' && (
             <span className="inline-block streaming-cursor w-2 h-4 align-middle" />
           )}
         </div>

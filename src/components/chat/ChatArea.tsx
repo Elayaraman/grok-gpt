@@ -17,40 +17,20 @@ export function ChatArea({ onSend, onRegenerate, isGenerating }: ChatAreaProps) 
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const lastMessageRef = useRef<HTMLDivElement>(null);
 
-  const lastMessage = messages[messages.length - 1];
-  const lastMessageStatus = lastMessage?.status;
-  const lastMessageContent = lastMessage?.content;
-
-  // Track the previous status to detect the streaming → completed transition
-  const prevStatusRef = useRef<string | undefined>(undefined);
-
-  // Auto-scroll to bottom on new message added
+  // Auto-scroll on new message added
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length]);
 
-  // Auto-scroll to bottom while token streaming
+  // Auto-scroll on token streaming
+  const lastMessageContent = messages[messages.length - 1]?.content;
+  const lastMessageStatus = messages[messages.length - 1]?.status;
   useEffect(() => {
     if (lastMessageStatus === 'streaming') {
       bottomRef.current?.scrollIntoView({ behavior: 'auto' });
     }
   }, [lastMessageContent, lastMessageStatus]);
-
-  // After refinement (streaming → completed), scroll to the TOP of the last response
-  useEffect(() => {
-    const prev = prevStatusRef.current;
-    prevStatusRef.current = lastMessageStatus;
-
-    if (prev === 'streaming' && lastMessageStatus === 'completed') {
-      // Wait for the collapse animation (~500ms) then snap to the top of the last message
-      const timer = setTimeout(() => {
-        lastMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 550);
-      return () => clearTimeout(timer);
-    }
-  }, [lastMessageStatus]);
 
   if (!activeConversation) {
     return (
@@ -76,18 +56,14 @@ export function ChatArea({ onSend, onRegenerate, isGenerating }: ChatAreaProps) 
           <WelcomeState onSend={onSend} isGenerating={isGenerating} />
         ) : (
           /* Conversation Messages List */
-          messages.map((message, index) => {
-            const isLast = index === messages.length - 1;
-            return (
-              <div key={message.id} ref={isLast ? lastMessageRef : undefined}>
-                <MessageItem
-                  message={message}
-                  isLast={isLast}
-                  onRegenerate={onRegenerate}
-                />
-              </div>
-            );
-          })
+          messages.map((message, index) => (
+            <MessageItem
+              key={message.id}
+              message={message}
+              isLast={index === messages.length - 1}
+              onRegenerate={onRegenerate}
+            />
+          ))
         )}
         <div ref={bottomRef} className="h-[220px] shrink-0" />
       </div>
