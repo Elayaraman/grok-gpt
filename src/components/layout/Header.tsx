@@ -10,15 +10,15 @@ export function Header() {
       </div>
 
       <div className="flex items-center gap-sm">
-        {/* Create New Plan Button */}
+        {/* Create New Chat Button */}
         <button
           onClick={() => createConversation()}
-          className="hidden md:flex items-center gap-xs px-sm py-[8px] border border-brand-border rounded-full hover:border-brand-text/20 transition-all text-[14px] text-brand-text/80"
+          className="hidden md:flex items-center gap-xs px-sm py-[8px] bg-brand-terracotta text-white border border-brand-terracotta rounded-full hover:bg-brand-terracotta/90 transition-all text-[14px] font-medium shadow-xs"
         >
           <span className="material-symbols-outlined text-[18px]" style={{ fontWeight: 200 }}>
             add
           </span>
-          <span>New Plan</span>
+          <span>New Chat</span>
         </button>
       </div>
     </header>

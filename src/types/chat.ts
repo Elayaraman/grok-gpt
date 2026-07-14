@@ -46,6 +46,7 @@ export interface ChatStore extends PersistedState {
   // Conversation actions
   createConversation: () => string;
   deleteConversation: (id: string) => void;
+  clearAllConversations: () => void;
   setActiveConversation: (id: string | null) => void;
   updateConversationTitle: (id: string, title: string) => void;
 

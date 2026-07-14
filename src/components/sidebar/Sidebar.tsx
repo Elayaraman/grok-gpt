@@ -7,8 +7,10 @@ export function Sidebar() {
   const activeConversationId = useChatStore((state) => state.activeConversationId);
   const setActiveConversation = useChatStore((state) => state.setActiveConversation);
   const deleteConversation = useChatStore((state) => state.deleteConversation);
+  const clearAllConversations = useChatStore((state) => state.clearAllConversations);
   const updateConversationTitle = useChatStore((state) => state.updateConversationTitle);
 
+  const [searchQuery, setSearchQuery] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const editInputRef = useRef<HTMLInputElement>(null);
@@ -49,8 +51,40 @@ export function Sidebar() {
     }
   };
 
+  const handleClearAll = () => {
+    if (conversationOrder.length === 0) return;
+
+    if (confirm('Are you sure you want to clear all chats?')) {
+      clearAllConversations();
+      setEditingId(null);
+      setSearchQuery('');
+    }
+  };
+
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+  const filteredConversationOrder = conversationOrder.filter((id) => {
+    const conversation = conversations[id];
+    return conversation && conversation.title.toLowerCase().includes(normalizedSearchQuery);
+  });
+
   return (
     <aside className="w-[280px] h-full border-r border-brand-border bg-brand-bg/80 backdrop-blur flex flex-col hidden md:flex shrink-0">
+      <div className="p-md pb-sm">
+        <label className="relative block">
+          <span className="sr-only">Search chats</span>
+          <span className="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-brand-text/40">
+            search
+          </span>
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search chats"
+            className="w-full rounded-lg border border-brand-border bg-white/50 py-2 pl-10 pr-9 text-[13px] text-brand-text placeholder:text-brand-text/40 outline-none transition-colors focus:border-brand-terracotta/50 focus:ring-2 focus:ring-brand-terracotta/10"
+          />
+        </label>
+      </div>
+
       {/* History List */}
       <div className="flex-1 overflow-y-auto p-md flex flex-col gap-xs">
         <div className="text-[12px] font-medium text-brand-text/40 px-sm pb-xs tracking-wider uppercase">
@@ -59,8 +93,10 @@ export function Sidebar() {
 
         {conversationOrder.length === 0 ? (
           <div className="px-sm py-4 text-[13px] text-brand-text/40 italic">No conversations yet</div>
+        ) : filteredConversationOrder.length === 0 ? (
+          <div className="px-sm py-4 text-[13px] text-brand-text/40 italic">No chats found</div>
         ) : (
-          conversationOrder.map((id) => {
+          filteredConversationOrder.map((id) => {
             const conv = conversations[id];
             if (!conv) return null;
 
@@ -121,6 +157,20 @@ export function Sidebar() {
             );
           })
         )}
+      </div>
+
+      <div className="border-t border-brand-border p-md">
+        <button
+          type="button"
+          onClick={handleClearAll}
+          disabled={conversationOrder.length === 0}
+          className="flex w-full items-center justify-center gap-xs rounded-lg border border-brand-terracotta/20 px-sm py-2 text-[13px] font-medium text-brand-terracotta transition-colors hover:bg-brand-terracotta/10 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          <span className="material-symbols-outlined text-[18px]" style={{ fontWeight: 300 }}>
+            delete_sweep
+          </span>
+          <span>Clear all chats</span>
+        </button>
       </div>
     </aside>
   );

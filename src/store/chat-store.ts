@@ -87,6 +87,14 @@ export const useChatStore = create<ChatStore>()(
         });
       },
 
+      clearAllConversations: (): void => {
+        set({
+          conversations: {},
+          conversationOrder: [],
+          activeConversationId: null,
+        });
+      },
+
       setActiveConversation: (id: string | null): void => {
         set({ activeConversationId: id });
       },
