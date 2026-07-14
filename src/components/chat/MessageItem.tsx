@@ -16,7 +16,7 @@ export function MessageItem({ message, isLast, onRegenerate }: MessageItemProps)
     return (
       <div className="flex gap-md items-start justify-end max-w-[85%] ml-auto">
         <div className="bg-brand-sage/10 text-brand-sage rounded-2xl rounded-tr-sm p-[24px] border border-brand-sage/20 font-sans leading-relaxed text-[16px]">
-          <p className="whitespace-pre-wrap">{message.content}</p>
+          <p>{message.content}</p>
         </div>
       </div>
     );
@@ -25,13 +25,13 @@ export function MessageItem({ message, isLast, onRegenerate }: MessageItemProps)
   // Assistant Message
   return (
     <div className="flex gap-md items-start max-w-[85%] group">
-      <div className="pt-[8px] text-brand-text/90 w-full leading-relaxed text-[16px] flex flex-col gap-2">
+      <div className="pt-[8px] text-brand-text/90 w-full max-w-prose leading-relaxed text-[16px] flex flex-col gap-2">
         <div className="prose prose-stone max-w-none prose-p:leading-relaxed prose-pre:bg-black/5 prose-pre:border prose-pre:border-black/10 prose-pre:rounded-lg prose-pre:p-sm">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             rehypePlugins={[rehypeHighlight]}
             components={{
-              p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
+              p: ({ children }) => <p className="mb-4 last:mb-0 leading-relaxed text-[16px] text-brand-text/90">{children}</p>,
               ul: ({ children }) => <ul className="list-disc pl-5 mb-4 space-y-1">{children}</ul>,
               ol: ({ children }) => <ol className="list-decimal pl-5 mb-4 space-y-1">{children}</ol>,
               li: ({ children }) => <li className="mb-0.5">{children}</li>,
@@ -46,7 +46,7 @@ export function MessageItem({ message, isLast, onRegenerate }: MessageItemProps)
               ),
               thead: ({ children }) => <thead className="bg-black/5 border-b border-brand-border font-medium">{children}</thead>,
               tbody: ({ children }) => <tbody>{children}</tbody>,
-              tr: ({ children }) => <tr className="border-b border-brand-border last:border-b-0 hover:bg-black-[2px]">{children}</tr>,
+              tr: ({ children }) => <tr className="border-b border-brand-border last:border-b-0">{children}</tr>,
               th: ({ children }) => <th className="p-3 font-semibold">{children}</th>,
               td: ({ children }) => <td className="p-3">{children}</td>,
               code: ({ className, children, ...props }) => {

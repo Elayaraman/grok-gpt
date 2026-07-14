@@ -42,7 +42,7 @@ export function InputArea({ onSend, onStop, isGenerating, error, onClearError }:
 
   return (
     <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-brand-bg via-brand-bg/95 to-transparent pt-xl pb-lg px-md md:px-lg">
-      <div className="max-w-[850px] mx-auto relative flex flex-col gap-2">
+      <div className="max-w-[850px] mx-auto relative flex flex-col gap-3">
         {/* Error Message Display */}
         {error && (
           <div className="p-sm px-md bg-brand-terracotta/10 border border-brand-terracotta/20 rounded-xl text-brand-terracotta text-[14px] flex justify-between items-center shadow-xs animate-fade-in">
@@ -62,7 +62,7 @@ export function InputArea({ onSend, onStop, isGenerating, error, onClearError }:
         {/* Form Input Box */}
         <form
           onSubmit={handleSubmit}
-          className="bg-white/85 backdrop-blur-sm border border-brand-border rounded-2xl flex flex-col focus-within:border-brand-sage/40 focus-within:ring-1 focus-within:ring-brand-sage/20 transition-all duration-300 overflow-hidden shadow-xs"
+          className="bg-white/80 backdrop-blur-sm border border-brand-border rounded-2xl flex flex-col focus-within:border-brand-sage/40 focus-within:ring-1 focus-within:ring-brand-sage/20 transition-all duration-300 overflow-hidden"
         >
           <textarea
             ref={textareaRef}
@@ -70,16 +70,13 @@ export function InputArea({ onSend, onStop, isGenerating, error, onClearError }:
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="w-full bg-transparent border-none resize-none focus:outline-none focus:ring-0 p-lg pb-md font-sans text-brand-text placeholder:text-brand-text/40 max-h-[200px] overflow-y-auto text-[16px] leading-relaxed"
+            className="w-full bg-transparent border-none resize-none focus:ring-0 p-lg pb-md font-sans text-brand-text placeholder:text-brand-text/40 max-h-[200px] overflow-y-auto text-[16px] leading-relaxed"
             placeholder="Tell Cora what you have in mind..."
             disabled={false}
           />
-          <div className="flex justify-between items-center p-sm px-md border-t border-brand-border/20 bg-black/[1%]">
+          <div className="flex justify-between items-center p-sm px-md">
             <div className="flex gap-xs">
-              {/* Extra tools / mock attachments */}
-              <span className="text-[12px] text-brand-text/30 pl-1">
-                Press Enter to send, Shift+Enter for new line
-              </span>
+              {/* Extra tools placeholder */}
             </div>
             <div className="flex items-center gap-xs">
               {isGenerating ? (
