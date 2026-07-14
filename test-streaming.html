@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Groq Streaming Test</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0f0f0f;
+      color: #e0e0e0;
+      padding: 2rem;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    h1 { font-size: 1.2rem; margin-bottom: 1rem; color: #888; }
+    label { display: block; font-size: 0.85rem; color: #aaa; margin-bottom: 0.3rem; }
+    input, textarea {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #e0e0e0;
+      font-size: 0.9rem;
+      font-family: inherit;
+      margin-bottom: 1rem;
+      outline: none;
+    }
+    input:focus, textarea:focus { border-color: #555; }
+    textarea { resize: vertical; min-height: 80px; }
+    button {
+      padding: 0.5rem 1.2rem;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      margin-right: 0.5rem;
+    }
+    button:hover { background: #1d4ed8; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    button.stop { background: #dc2626; }
+    button.stop:hover { background: #b91c1c; }
+    #output {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      min-height: 120px;
+      white-space: pre-wrap;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+    #status {
+      margin-top: 0.5rem;
+      font-size: 0.75rem;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧪 Groq Streaming — Integration Test</h1>
+
+  <label for="apiKey">Groq API Key</label>
+  <input type="password" id="apiKey" placeholder="gsk_..." />
+
+  <label for="prompt">Prompt</label>
+  <textarea id="prompt">Explain what Server-Sent Events are in 3 bullet points.</textarea>
+
+  <div>
+    <button id="send">Send</button>
+    <button id="stop" class="stop" disabled>Stop</button>
+  </div>
+
+  <div id="output"></div>
+  <div id="status"></div>
+
+  <script type="module">
+    // Import directly from the source via Vite's dev server
+    import { streamChatCompletion, GroqAbortError } from '/src/services/ai/groq-service.ts';
+
+    const apiKeyInput = document.getElementById('apiKey');
+    const promptInput = document.getElementById('prompt');
+    const sendBtn = document.getElementById('send');
+    const stopBtn = document.getElementById('stop');
+    const output = document.getElementById('output');
+    const status = document.getElementById('status');
+
+    let controller = null;
+
+    sendBtn.addEventListener('click', async () => {
+      const apiKey = apiKeyInput.value.trim();
+      const prompt = promptInput.value.trim();
+
+      if (!apiKey) { status.textContent = '⚠ Enter your API key'; return; }
+      if (!prompt) { status.textContent = '⚠ Enter a prompt'; return; }
+
+      // Reset UI
+      output.textContent = '';
+      status.textContent = '⏳ Streaming...';
+      sendBtn.disabled = true;
+      stopBtn.disabled = false;
+
+      controller = new AbortController();
+      const startTime = performance.now();
+      let tokenCount = 0;
+
+      try {
+        for await (const chunk of streamChatCompletion({
+          apiKey,
+          messages: [{ role: 'user', content: prompt }],
+          signal: controller.signal,
+        })) {
+          const token = chunk.choices[0]?.delta.content;
+          if (token) {
+            output.textContent += token;
+            tokenCount++;
+          }
+
+          const finishReason = chunk.choices[0]?.finish_reason;
+          if (finishReason) {
+            status.textContent = `✅ Done — ${finishReason} | ${tokenCount} tokens | ${((performance.now() - startTime) / 1000).toFixed(1)}s`;
+          }
+        }
+      } catch (err) {
+        if (err instanceof GroqAbortError) {
+          status.textContent = `🛑 Aborted — ${tokenCount} tokens kept | ${((performance.now() - startTime) / 1000).toFixed(1)}s`;
+        } else {
+          status.textContent = `❌ ${err.message}`;
+          console.error(err);
+        }
+      } finally {
+        sendBtn.disabled = false;
+        stopBtn.disabled = true;
+        controller = null;
+      }
+    });
+
+    stopBtn.addEventListener('click', () => {
+      if (controller) controller.abort();
+    });
+  </script>
+</body>
+</html>
